@@ -254,6 +254,20 @@
         opacity: 0.85;
       }
 
+      #start-overlay {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+        z-index: 300;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 4px solid var(--accent);
+        padding: 20px;
+        text-align: center;
+      }
+
       @media (min-width: 600px) {
         #controls {
           display: none;
@@ -288,6 +302,15 @@
     <div id="game-container">
       <canvas id="gameCanvas"></canvas>
       <div id="combo-popup">×2</div>
+
+      <div id="start-overlay">
+        <div class="terminal-header">// TERMINAL_SNAKE //</div>
+        <div style="margin: 32px 0">
+          <div class="label">STATUS</div>
+          <div class="value" style="font-size: 14px">READY_FOR_INIT</div>
+        </div>
+        <button class="restart-btn" id="start-game-btn">START_PROTOCOL</button>
+      </div>
 
       <div id="game-over-overlay">
         <div class="terminal-header">// GAME_OVER //</div>
@@ -412,12 +435,27 @@
 
           this.obstacles = [];
 
-          this.init();
+          this.setupEventListeners();
+          this.resize();
+          this.drawStatic();
+        }
+
+        setupEventListeners() {
           window.addEventListener("keydown", (e) => {
             audio.unlock();
             this.handleInput(e.key);
           });
+
           window.addEventListener("resize", () => this.resize());
+
+          document
+            .getElementById("start-game-btn")
+            .addEventListener("click", () => {
+              audio.unlock();
+              document.getElementById("start-overlay").style.display = "none";
+              this.init();
+            });
+
           document
             .getElementById("restart-from-overlay")
             .addEventListener("click", () => {
@@ -450,6 +488,28 @@
           this.canvas.width = size;
           this.canvas.height = size;
           this.tileSize = size / CONFIG.GRID_SIZE;
+          if (this.isGameOver === undefined) {
+            this.drawStatic();
+          }
+        }
+
+        drawStatic() {
+          const b = BIOMES[0];
+          const ts = this.tileSize;
+          this.ctx.fillStyle = b.bg;
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          this.ctx.strokeStyle = b.grid;
+          this.ctx.lineWidth = 0.5;
+          for (let i = 0; i <= CONFIG.GRID_SIZE; i++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(i * ts, 0);
+            this.ctx.lineTo(i * ts, this.canvas.height);
+            this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, i * ts);
+            this.ctx.lineTo(this.canvas.width, i * ts);
+            this.ctx.stroke();
+          }
         }
 
         init() {
